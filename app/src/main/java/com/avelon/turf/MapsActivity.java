@@ -3,10 +3,13 @@ package com.avelon.turf;
 import androidx.fragment.app.FragmentActivity;
 
 import android.content.Context;
+import android.content.Intent;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.widget.Toast;
 
+import com.avelon.turf.data.User;
+import com.avelon.turf.data.Zone;
 import com.google.android.gms.maps.GoogleMap;
 import com.avelon.turf.databinding.ActivityMapsBinding;
 
@@ -70,6 +73,12 @@ public class MapsActivity extends FragmentActivity {
          */
         mapFragment = new MapFragment(this.getSupportFragmentManager());
         mapPermissionsDelegate = new MapPermissionsDelegate(this);
+        speak = new Speak(this, new Speak.Listen() {
+            @Override
+            public void done() {
+                speak.speak("Welcome to TURF!");
+            }
+        });
 
         /*
          * Permissions
@@ -161,5 +170,12 @@ public class MapsActivity extends FragmentActivity {
                 logger.error("That didn't work!" + error);
             }
         });
+    }
+
+    @Override
+    public void onActivityResult(int request, int result, Intent data) {
+        super.onActivityResult(request, result, data);
+        logger.method("onActivityResult()", request, result, data.toString());
+        speak.onActivityResult(request, result, data);
     }
 }

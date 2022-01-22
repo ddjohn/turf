@@ -1,9 +1,9 @@
-package com.avelon.turf;
+package com.avelon.turf.data;
 
 public class Zone {
-    final String name;
-    final double latitude;
-    final double longitude;
+    final public String name;
+    final public double latitude;
+    final public double longitude;
 
     public Zone(String name, double latitude, double longitude) {
         this.name = name;

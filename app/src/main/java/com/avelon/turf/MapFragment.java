@@ -2,6 +2,8 @@ package com.avelon.turf;
 
 import androidx.fragment.app.FragmentManager;
 
+import com.avelon.turf.data.User;
+import com.avelon.turf.data.Zone;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
