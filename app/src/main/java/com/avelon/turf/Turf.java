@@ -13,6 +13,7 @@ import com.android.volley.toolbox.JsonRequest;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -42,32 +43,30 @@ public class Turf {
         StringRequest stringRequest = new StringRequest(Request.Method.GET, "https://api.turfgame.com/" + url,
                 response -> {
                     logger.debug("response: " + response);
-                    logger.debug("response: " + response.substring(0, 1));
 
-                    if(response.substring(0, 1).compareTo("[") == 0) {
-                        response = response.substring(1, response.length()-2);
-                    }
+                    //if(response.substring(0, 1).compareTo("[") == 0) {
+                    //    response = response.substring(1, response.length()-2);
+                    //}
 
                     try {
                         logger.debug("parse: " + response);
-                        JSONObject obj = new JSONObject(response);
+                        JSONArray obj = new JSONArray(response);
                         listener.onResponse(obj);
                     }
                     catch (JSONException e) {
-                        logger.error(e.toString());
-                        listener.onParseError(e.toString());
+                        logger.error("Parse error: " + url + " " + e.toString());
+                        listener.onError("Parse error: " + e.toString());
                     }
                 }, error -> {
-                    logger.error("error: " + error);
-                listener.onError(error);
-            }
+                    logger.error("Network error: "  + url + " " + error);
+                    listener.onError("Network error: " + error);
+                }
         );
         queue.add(stringRequest);
     }
 
     public interface Listener {
-        public void onResponse(JSONObject response);
-        public void onParseError(String error);
-        public void onError(VolleyError error);
+        public void onResponse(JSONArray response);
+        public void onError(String error);
     }
 }

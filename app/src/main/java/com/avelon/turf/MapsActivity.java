@@ -1,42 +1,23 @@
 package com.avelon.turf;
 
-import androidx.annotation.NonNull;
-import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.FragmentActivity;
 
-import android.Manifest;
-import android.annotation.SuppressLint;
 import android.content.Context;
-import android.content.pm.PackageManager;
-import android.location.Location;
-import android.location.LocationListener;
 import android.location.LocationManager;
-import android.net.ConnectivityManager;
-import android.net.Network;
 import android.os.Bundle;
-import android.util.Log;
 import android.widget.Toast;
 
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.JsonObjectRequest;
-import com.android.volley.toolbox.StringRequest;
-import com.android.volley.toolbox.Volley;
-import com.google.android.gms.common.api.Response;
-import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MarkerOptions;
 import com.avelon.turf.databinding.ActivityMapsBinding;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.IOException;
-import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class MapsActivity extends FragmentActivity {
     private Logger logger = new Logger(MapsActivity.class);
@@ -45,6 +26,37 @@ public class MapsActivity extends FragmentActivity {
     private ActivityMapsBinding binding;
     private MapFragment mapFragment;
     private MapPermissionsDelegate mapPermissionsDelegate;
+    private Speak speak;
+
+    @Override
+    protected void onDestroy() {
+        logger.method("onDestroy()");
+        super.onDestroy();
+    }
+
+    @Override
+    protected void onPause() {
+        logger.method("onPause()");
+        super.onPause();
+    }
+
+    @Override
+    protected void onResume() {
+        logger.method("onResume()");
+        super.onResume();
+    }
+
+    @Override
+    protected void onStart() {
+        logger.method("onStart()");
+        super.onStart();
+    }
+
+    @Override
+    protected void onStop() {
+        logger.method("onStop()");
+        super.onStop();
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,28 +80,76 @@ public class MapsActivity extends FragmentActivity {
             return;
         }
 
-        turfMethod();
+        Timer timer = new Timer();
+        timer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                turfUsers();
+            }
+        }, 10000, 10*10000);
+
+        Timer timer2 = new Timer();
+        timer2.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                turfZones();
+            }
+        }, 5000, 3600*1000);
+
         locationMethod();
     }
 
     private void locationMethod() {
         LocationDelegate location = new LocationDelegate((LocationManager)getSystemService(Context.LOCATION_SERVICE));
-        location.register(new LocationDelegate.Listen() {
+        location.register(location1 -> mapFragment.update(location1.getLatitude(), location1.getLongitude(), 10 /*15*/));
+    }
+    private void turfUsers() {
+        logger.method("turfUsers()");
+
+        Turf turf = new Turf(this);
+        turf.request(Turf.users_location, new Turf.Listener() {
+            @Override
+            public void onResponse(JSONArray json) {
+                try {
+                    List<User> users = new ArrayList<User>();
+                    for (int i = 0; i < json.length(); i++) {
+                        JSONObject obj = json.getJSONObject(i);
+                        String name = obj.getString("name");
+                        double latitude = obj.getDouble("latitude");
+                        double longitude = obj.getDouble("longitude");
+                        users.add(new User(name, latitude, longitude));
+                    }
+                    mapFragment.setUsers(users);
+                } catch (JSONException e) {
+                    logger.error("" + e);
+                }
+            }
 
             @Override
-            public void onLocationChanged(Location location) {
-                mapFragment.update(location.getLatitude(), location.getLongitude(), 15);
+            public void onError(String error) {
+                logger.error("That didn't work!" + error);
             }
         });
     }
 
-    private void turfMethod() {
+    private void turfZones() {
+        logger.method("turfZones()");
+
         Turf turf = new Turf(this);
-        turf.request(Turf.rounds, new Turf.Listener() {
+        turf.request(Turf.zones_all, new Turf.Listener() {
             @Override
-            public void onResponse(JSONObject response) {
+            public void onResponse(JSONArray json) {
+                logger.error(json.toString());
                 try {
-                    logger.info("Response is: " + response.getString("totalUsers"));
+                    List<Zone> zones = new ArrayList<Zone>();
+                    for(int i = 0; i < json.length(); i++) {
+                        JSONObject obj = json.getJSONObject(i);
+                        String name = obj.getString("name");
+                        double latitude = obj.getDouble("latitude");
+                        double longitude = obj.getDouble("longitude");
+                        zones.add(new Zone(name, latitude, longitude));
+                    }
+                    mapFragment.setZones(zones);
                 }
                 catch(JSONException e) {
                     logger.error("" + e);
@@ -97,12 +157,7 @@ public class MapsActivity extends FragmentActivity {
             }
 
             @Override
-            public void onParseError(String error) {
-                logger.error("That didn't work!" + error);
-            }
-
-            @Override
-            public void onError(VolleyError error) {
+            public void onError(String error) {
                 logger.error("That didn't work!" + error);
             }
         });

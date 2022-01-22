@@ -19,7 +19,7 @@ public class MapPermissionsDelegate implements ActivityCompat.OnRequestPermissio
     private final Activity activity;
 
     public MapPermissionsDelegate(Activity activity) {
-        logger.method("MapPermissions()", activity);
+        logger.method("MapPermissionsDelegate()");
         this.activity = activity;
     }
 

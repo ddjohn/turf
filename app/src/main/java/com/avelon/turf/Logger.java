@@ -19,11 +19,10 @@ public class Logger {
     public void error(String s) {
         Log.e(tag, "<-err-> " + s);
     }
-    public void info(String s) {
+    public void  info(String s) {
         Log.i(tag, "<-inf-> " + s);
     }
-
     public void debug(String s) {
-        Log.d(tag, "<-inf-> " + s);
+        Log.v(tag, "<-dbg-> " + s);
     }
 }

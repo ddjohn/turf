@@ -21,10 +21,9 @@ public class LocationDelegate {
     @SuppressLint("MissingPermission")
     public void register(Listen listen) {
         manager.requestLocationUpdates(LocationManager.GPS_PROVIDER, MIN_FREQUENCY, MIN_DISTANCE, location -> {
-            logger.info("position=" + location);
+            logger.method("onLocationUpdate()", location);
             listen.onLocationChanged(location);
         });
-
     }
 
     public interface Listen {
