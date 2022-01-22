@@ -1,9 +1,29 @@
 package com.avelon.turf;
 
+import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.FragmentActivity;
 
+import android.Manifest;
+import android.annotation.SuppressLint;
+import android.content.Context;
+import android.content.pm.PackageManager;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
+import android.net.ConnectivityManager;
+import android.net.Network;
 import android.os.Bundle;
+import android.util.Log;
+import android.widget.Toast;
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
+import com.google.android.gms.common.api.Response;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -12,10 +32,19 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.avelon.turf.databinding.ActivityMapsBinding;
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
+import java.net.URL;
+
+public class MapsActivity extends FragmentActivity {
+    private Logger logger = new Logger(MapsActivity.class);
 
     private GoogleMap mMap;
     private ActivityMapsBinding binding;
+    private MapFragment mapFragment;
+    private MapPermissionsDelegate mapPermissionsDelegate;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -24,28 +53,58 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         binding = ActivityMapsBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.map);
-        mapFragment.getMapAsync(this);
+        /*
+         * Components
+         */
+        mapFragment = new MapFragment(this.getSupportFragmentManager());
+        mapPermissionsDelegate = new MapPermissionsDelegate(this);
+
+        /*
+         * Permissions
+         */
+        if (mapPermissionsDelegate.checkPermissions()) {
+        } else {
+            Toast.makeText(this, "Not enough accesses", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        turfMethod();
+        locationMethod();
     }
 
-    /**
-     * Manipulates the map once available.
-     * This callback is triggered when the map is ready to be used.
-     * This is where we can add markers or lines, add listeners or move the camera. In this case,
-     * we just add a marker near Sydney, Australia.
-     * If Google Play services is not installed on the device, the user will be prompted to install
-     * it inside the SupportMapFragment. This method will only be triggered once the user has
-     * installed Google Play services and returned to the app.
-     */
-    @Override
-    public void onMapReady(GoogleMap googleMap) {
-        mMap = googleMap;
+    private void locationMethod() {
+        LocationDelegate location = new LocationDelegate((LocationManager)getSystemService(Context.LOCATION_SERVICE));
+        location.register(new LocationDelegate.Listen() {
 
-        // Add a marker in Sydney and move the camera
-        LatLng sydney = new LatLng(-34, 151);
-        mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
+            @Override
+            public void onLocationChanged(Location location) {
+                mapFragment.update(location.getLatitude(), location.getLongitude(), 15);
+            }
+        });
+    }
+
+    private void turfMethod() {
+        Turf turf = new Turf(this);
+        turf.request(Turf.rounds, new Turf.Listener() {
+            @Override
+            public void onResponse(JSONObject response) {
+                try {
+                    logger.info("Response is: " + response.getString("totalUsers"));
+                }
+                catch(JSONException e) {
+                    logger.error("" + e);
+                }
+            }
+
+            @Override
+            public void onParseError(String error) {
+                logger.error("That didn't work!" + error);
+            }
+
+            @Override
+            public void onError(VolleyError error) {
+                logger.error("That didn't work!" + error);
+            }
+        });
     }
 }
