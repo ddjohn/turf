@@ -15,7 +15,6 @@ public class Logger {
             Log.d(tag, "<-arg-> " + o);
         }
     }
-
     public void error(String s) {
         Log.e(tag, "<-err-> " + s);
     }

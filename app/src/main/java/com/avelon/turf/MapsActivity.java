@@ -1,14 +1,18 @@
 package com.avelon.turf;
 
+import androidx.annotation.NonNull;
 import androidx.fragment.app.FragmentActivity;
 
 import android.content.Context;
 import android.content.Intent;
+import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.widget.Toast;
 
+import com.avelon.turf.data.Position;
 import com.avelon.turf.data.User;
+import com.avelon.turf.data.Users;
 import com.avelon.turf.data.Zone;
 import com.google.android.gms.maps.GoogleMap;
 import com.avelon.turf.databinding.ActivityMapsBinding;
@@ -28,42 +32,22 @@ public class MapsActivity extends FragmentActivity {
     private GoogleMap mMap;
     private ActivityMapsBinding binding;
     private MapFragment mapFragment;
-    private MapPermissionsDelegate mapPermissionsDelegate;
     private Speak speak;
+    private Users users = new Users();
 
     @Override
-    protected void onDestroy() {
+    protected void onSaveInstanceState(@NonNull Bundle bundle) {
+        super.onSaveInstanceState(bundle);
+        logger.method("onSaveInstanceState()");
+
+        bundle.putInt("test", 7);
+        logger.error("bundler-save: " + bundle);
+    }
+
+    @Override
+    protected void onCreate(Bundle bundle) {
         logger.method("onDestroy()");
-        super.onDestroy();
-    }
-
-    @Override
-    protected void onPause() {
-        logger.method("onPause()");
-        super.onPause();
-    }
-
-    @Override
-    protected void onResume() {
-        logger.method("onResume()");
-        super.onResume();
-    }
-
-    @Override
-    protected void onStart() {
-        logger.method("onStart()");
-        super.onStart();
-    }
-
-    @Override
-    protected void onStop() {
-        logger.method("onStop()");
-        super.onStop();
-    }
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+        super.onCreate(bundle);
 
         binding = ActivityMapsBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
@@ -72,7 +56,7 @@ public class MapsActivity extends FragmentActivity {
          * Components
          */
         mapFragment = new MapFragment(this.getSupportFragmentManager());
-        mapPermissionsDelegate = new MapPermissionsDelegate(this);
+        MapPermissionsDelegate mapPermissionsDelegate = new MapPermissionsDelegate(this);
         speak = new Speak(this, new Speak.Listen() {
             @Override
             public void done() {
@@ -84,6 +68,7 @@ public class MapsActivity extends FragmentActivity {
          * Permissions
          */
         if (mapPermissionsDelegate.checkPermissions()) {
+
         } else {
             Toast.makeText(this, "Not enough accesses", Toast.LENGTH_LONG).show();
             return;
@@ -93,25 +78,36 @@ public class MapsActivity extends FragmentActivity {
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
+                logger.info("Get users from server");
                 turfUsers();
             }
-        }, 10000, 10*10000);
+        }, 0, 3*1000);
 
-        Timer timer2 = new Timer();
-        timer2.scheduleAtFixedRate(new TimerTask() {
+        timer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-                turfZones();
+                logger.info("Get zones from server");
+//                turfZones();
             }
         }, 5000, 3600*1000);
 
         locationMethod();
+
+        timer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                runOnUiThread(() -> mapFragment.update());
+            }
+        }, 1000, 1000);
     }
 
     private void locationMethod() {
         LocationDelegate location = new LocationDelegate((LocationManager)getSystemService(Context.LOCATION_SERVICE));
-        location.register(location1 -> mapFragment.update(location1.getLatitude(), location1.getLongitude(), 10 /*15*/));
+        location.register(position -> {
+            mapFragment.setPosition(new Position(position.getLatitude(), position.getLongitude(), 13)); /*10 city, 15 tsreet*/
+        });
     }
+
     private void turfUsers() {
         logger.method("turfUsers()");
 
@@ -120,14 +116,15 @@ public class MapsActivity extends FragmentActivity {
             @Override
             public void onResponse(JSONArray json) {
                 try {
-                    List<User> users = new ArrayList<User>();
+                    List<User> tempUsers = new ArrayList<User>();
                     for (int i = 0; i < json.length(); i++) {
                         JSONObject obj = json.getJSONObject(i);
                         String name = obj.getString("name");
                         double latitude = obj.getDouble("latitude");
                         double longitude = obj.getDouble("longitude");
-                        users.add(new User(name, latitude, longitude));
+                        tempUsers.add(new User(name, latitude, longitude));
                     }
+                    users.setUsers(tempUsers);
                     mapFragment.setUsers(users);
                 } catch (JSONException e) {
                     logger.error("" + e);

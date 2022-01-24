@@ -10,7 +10,7 @@ public class LocationDelegate {
     private Logger logger = new Logger(LocationDelegate.class);
 
     private static final int MIN_FREQUENCY = 1000;
-    private static final float MIN_DISTANCE = 1.0f;
+    private static final float MIN_DISTANCE = 0; //1.0f;
 
     private LocationManager manager;
 
@@ -21,7 +21,7 @@ public class LocationDelegate {
     @SuppressLint("MissingPermission")
     public void register(Listen listen) {
         manager.requestLocationUpdates(LocationManager.GPS_PROVIDER, MIN_FREQUENCY, MIN_DISTANCE, location -> {
-            logger.method("onLocationUpdate()", location);
+            logger.info("Got a new position:" + location);
             listen.onLocationChanged(location);
         });
     }
