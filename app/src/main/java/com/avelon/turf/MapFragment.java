@@ -22,15 +22,16 @@ import java.util.List;
 public class MapFragment implements OnMapReadyCallback {
     private static final Logger logger = new Logger(MapFragment.class);
 
-    private boolean draw = false;
-
     private GoogleMap map;
 
-    private int zoom = 0;
     private Users users = new Users();
     private List<Zone> zones = new ArrayList<Zone>();
     private Position position = new Position(0.0, 0.0);
-    private HashMap<String, Marker> markers = new HashMap<>();
+    private final HashMap<String, Marker> markers = new HashMap<>();
+    private Marker meMarker = null;
+
+    private int zoom = 0;
+    private boolean draw = false;
 
     public MapFragment(FragmentManager mgr) {
         super();
@@ -55,7 +56,7 @@ public class MapFragment implements OnMapReadyCallback {
         CameraUpdate camera = CameraUpdateFactory.newLatLngZoom(here, zoom);
         map.moveCamera(camera);
 
-        map.clear();
+        //map.clear();
 
         logger.info("Drawing " + users.size() + " users");
         for(User user : users.values()) {
@@ -63,9 +64,16 @@ public class MapFragment implements OnMapReadyCallback {
 
             if (markers.containsKey(user.name)) {
                 Marker marker = markers.get(user.name);
+                logger.info("Move marker to: " + position);
                 marker.setPosition(position);
+                if(user.hidden) {
+                    marker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW));
+                } else {
+                    marker.setIcon((BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
+                }
                 markers.put(user.name, marker);
             } else {
+                logger.info("Create new marker: " + position);
                 MarkerOptions markerOptions;
                 if(user.hidden) {
                     markerOptions = new MarkerOptions().position(position).title(user.name).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW));
@@ -85,8 +93,12 @@ public class MapFragment implements OnMapReadyCallback {
         }
 
         logger.info("Drawing me");
-        map.addMarker(new MarkerOptions().position(here).title("Me")).showInfoWindow();
-
+        if(meMarker == null) {
+            meMarker = map.addMarker(new MarkerOptions().position(here).title("Me"));
+            meMarker.showInfoWindow();
+        } else {
+            meMarker.setPosition(here);
+        }
         draw = false;
     }
 

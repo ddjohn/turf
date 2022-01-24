@@ -77,8 +77,6 @@ public class MapsActivity extends FragmentActivity {
         turfLocation();
         turfZoom();
 
-
-
         Timer timer = new Timer();
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
@@ -92,7 +90,7 @@ public class MapsActivity extends FragmentActivity {
             @Override
             public void run() {
                 logger.info("Get zones from server");
-//                turfZones();
+                turfZones();
             }
         }, 5000, 3600*1000);
 
@@ -153,7 +151,7 @@ public class MapsActivity extends FragmentActivity {
         turf.request(Turf.zones_all, new Turf.Listener() {
             @Override
             public void onResponse(JSONArray json) {
-                logger.error(json.toString());
+                logger.info(json.toString());
                 try {
                     List<Zone> zones = new ArrayList<Zone>();
                     for(int i = 0; i < json.length(); i++) {

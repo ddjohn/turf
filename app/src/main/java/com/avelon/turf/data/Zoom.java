@@ -13,8 +13,8 @@ public class Zoom {
         FloatingActionButton street = (FloatingActionButton) activity.findViewById(R.id.street);
 
         world.setOnClickListener(v -> listener.onChange(0));
-        city.setOnClickListener(v -> listener.onChange(10));
-        street.setOnClickListener(v -> listener.onChange(14));
+        city.setOnClickListener(v -> listener.onChange(11));
+        street.setOnClickListener(v -> listener.onChange(15));
     }
 
     public interface Listener {
