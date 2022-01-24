@@ -5,7 +5,6 @@ import androidx.fragment.app.FragmentActivity;
 
 import android.content.Context;
 import android.content.Intent;
-import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.widget.Toast;
@@ -14,6 +13,7 @@ import com.avelon.turf.data.Position;
 import com.avelon.turf.data.User;
 import com.avelon.turf.data.Users;
 import com.avelon.turf.data.Zone;
+import com.avelon.turf.data.Zoom;
 import com.google.android.gms.maps.GoogleMap;
 import com.avelon.turf.databinding.ActivityMapsBinding;
 
@@ -74,6 +74,11 @@ public class MapsActivity extends FragmentActivity {
             return;
         }
 
+        turfLocation();
+        turfZoom();
+
+
+
         Timer timer = new Timer();
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
@@ -91,20 +96,23 @@ public class MapsActivity extends FragmentActivity {
             }
         }, 5000, 3600*1000);
 
-        locationMethod();
-
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
                 runOnUiThread(() -> mapFragment.update());
             }
         }, 1000, 1000);
+
     }
 
-    private void locationMethod() {
+    private void turfZoom() {
+        Zoom zoom = new Zoom(this, (Zoom.Listener) zoom1 -> mapFragment.setZoom(zoom1));
+    }
+
+    private void turfLocation() {
         LocationDelegate location = new LocationDelegate((LocationManager)getSystemService(Context.LOCATION_SERVICE));
         location.register(position -> {
-            mapFragment.setPosition(new Position(position.getLatitude(), position.getLongitude(), 13)); /*10 city, 15 tsreet*/
+            mapFragment.setPosition(new Position(position.getLatitude(), position.getLongitude()));
         });
     }
 

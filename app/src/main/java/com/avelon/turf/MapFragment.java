@@ -1,7 +1,6 @@
 package com.avelon.turf;
 
 import androidx.fragment.app.FragmentManager;
-
 import com.avelon.turf.data.Position;
 import com.avelon.turf.data.User;
 import com.avelon.turf.data.Users;
@@ -14,11 +13,11 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
 
 public class MapFragment implements OnMapReadyCallback {
     private static final Logger logger = new Logger(MapFragment.class);
@@ -27,9 +26,11 @@ public class MapFragment implements OnMapReadyCallback {
 
     private GoogleMap map;
 
+    private int zoom = 0;
     private Users users = new Users();
     private List<Zone> zones = new ArrayList<Zone>();
-    private Position position = new Position(0,0,0);
+    private Position position = new Position(0.0, 0.0);
+    private HashMap<String, Marker> markers = new HashMap<>();
 
     public MapFragment(FragmentManager mgr) {
         super();
@@ -45,11 +46,13 @@ public class MapFragment implements OnMapReadyCallback {
         this.map = map;
     }
 
-    public void update() {
+    public synchronized void update() {
         logger.method("update()");
+        if(draw == false)
+            return;
 
         LatLng here = new LatLng(position.latitude, position.longitude);
-        CameraUpdate camera = CameraUpdateFactory.newLatLngZoom(here, position.zoom); // 2-21
+        CameraUpdate camera = CameraUpdateFactory.newLatLngZoom(here, zoom);
         map.moveCamera(camera);
 
         map.clear();
@@ -57,10 +60,21 @@ public class MapFragment implements OnMapReadyCallback {
         logger.info("Drawing " + users.size() + " users");
         for(User user : users.values()) {
             LatLng position = new LatLng(user.latitude, user.longitude);
-            if(user.hidden) {
-                map.addMarker(new MarkerOptions().position(position).title(user.name).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW))).showInfoWindow();
+
+            if (markers.containsKey(user.name)) {
+                Marker marker = markers.get(user.name);
+                marker.setPosition(position);
+                markers.put(user.name, marker);
             } else {
-                map.addMarker(new MarkerOptions().position(position).title(user.name).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE))).showInfoWindow();
+                MarkerOptions markerOptions;
+                if(user.hidden) {
+                    markerOptions = new MarkerOptions().position(position).title(user.name).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW));
+                } else {
+                    markerOptions = new MarkerOptions().position(position).title(user.name).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE));
+                }
+                Marker marker = map.addMarker(markerOptions);
+                marker.showInfoWindow();
+                markers.put(user.name, marker);
             }
         }
 
@@ -72,6 +86,8 @@ public class MapFragment implements OnMapReadyCallback {
 
         logger.info("Drawing me");
         map.addMarker(new MarkerOptions().position(here).title("Me")).showInfoWindow();
+
+        draw = false;
     }
 
     public synchronized void setPosition(Position position) {
@@ -89,6 +105,12 @@ public class MapFragment implements OnMapReadyCallback {
     public synchronized void setZones(List<Zone> zones) {
         logger.method("setZones()", users);
         this.zones = zones;
+        draw = true;
+    }
+
+    public void setZoom(int zoom) {
+        logger.method("setZoom()", zoom);
+        this.zoom = zoom;
         draw = true;
     }
 }
