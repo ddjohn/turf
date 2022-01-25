@@ -32,6 +32,7 @@ public class MapFragment implements OnMapReadyCallback {
 
     private int zoom = 0;
     private boolean draw = false;
+    private boolean follow = true;
 
     public MapFragment(FragmentManager mgr) {
         super();
@@ -53,9 +54,10 @@ public class MapFragment implements OnMapReadyCallback {
             return;
 
         LatLng here = new LatLng(position.latitude, position.longitude);
-        CameraUpdate camera = CameraUpdateFactory.newLatLngZoom(here, zoom);
-        map.moveCamera(camera);
-
+        if(follow) {
+            CameraUpdate camera = CameraUpdateFactory.newLatLngZoom(here, zoom);
+            map.moveCamera(camera);
+        }
         //map.clear();
 
         logger.info("Drawing " + users.size() + " users");
@@ -81,7 +83,7 @@ public class MapFragment implements OnMapReadyCallback {
                     markerOptions = new MarkerOptions().position(position).title(user.name).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE));
                 }
                 Marker marker = map.addMarker(markerOptions);
-                marker.showInfoWindow();
+                //marker.showInfoWindow();
                 markers.put(user.name, marker);
             }
         }
@@ -124,5 +126,10 @@ public class MapFragment implements OnMapReadyCallback {
         logger.method("setZoom()", zoom);
         this.zoom = zoom;
         draw = true;
+    }
+
+    public void setFollow(boolean follow) {
+        logger.method("setFollow()", follow);
+        this.follow = follow;
     }
 }

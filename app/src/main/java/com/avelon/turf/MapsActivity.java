@@ -9,11 +9,12 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.widget.Toast;
 
+import com.avelon.turf.buttons.Follow;
 import com.avelon.turf.data.Position;
 import com.avelon.turf.data.User;
 import com.avelon.turf.data.Users;
 import com.avelon.turf.data.Zone;
-import com.avelon.turf.data.Zoom;
+import com.avelon.turf.buttons.Zoom;
 import com.google.android.gms.maps.GoogleMap;
 import com.avelon.turf.databinding.ActivityMapsBinding;
 
@@ -74,8 +75,10 @@ public class MapsActivity extends FragmentActivity {
             return;
         }
 
-        turfLocation();
+        turfFollow();
         turfZoom();
+        turfLocation();
+
 
         Timer timer = new Timer();
         timer.scheduleAtFixedRate(new TimerTask() {
@@ -101,6 +104,10 @@ public class MapsActivity extends FragmentActivity {
             }
         }, 1000, 1000);
 
+    }
+
+    private void turfFollow() {
+        Follow follow = new Follow(this, (Follow.Listener) follow1 -> mapFragment.setFollow(follow1));
     }
 
     private void turfZoom() {

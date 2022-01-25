@@ -1,9 +1,8 @@
-package com.avelon.turf.data;
+package com.avelon.turf.buttons;
 
 import android.app.Activity;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
-import android.view.View;
 
 import com.avelon.turf.Logger;
 import com.avelon.turf.R;
