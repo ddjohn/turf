@@ -3,6 +3,7 @@ package com.avelon.turf;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.FragmentActivity;
 
+import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.location.LocationManager;
@@ -15,6 +16,7 @@ import com.avelon.turf.data.User;
 import com.avelon.turf.data.Users;
 import com.avelon.turf.data.Zone;
 import com.avelon.turf.buttons.Zoom;
+import com.avelon.turf.data.Zones;
 import com.google.android.gms.maps.GoogleMap;
 import com.avelon.turf.databinding.ActivityMapsBinding;
 
@@ -30,11 +32,14 @@ import java.util.TimerTask;
 public class MapsActivity extends FragmentActivity {
     private Logger logger = new Logger(MapsActivity.class);
 
+    private StartupDialog dlg = new StartupDialog();
+
     private GoogleMap mMap;
     private ActivityMapsBinding binding;
     private MapFragment mapFragment;
     private Speak speak;
     private Users users = new Users();
+    private int gps = 0;
 
     @Override
     protected void onSaveInstanceState(@NonNull Bundle bundle) {
@@ -53,14 +58,12 @@ public class MapsActivity extends FragmentActivity {
         binding = ActivityMapsBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        /*
-         * Components
-         */
         mapFragment = new MapFragment(this.getSupportFragmentManager());
-        MapPermissionsDelegate mapPermissionsDelegate = new MapPermissionsDelegate(this);
+
         speak = new Speak(this, new Speak.Listen() {
             @Override
             public void done() {
+                dlg.addMessage("Initiated speech engine");
                 speak.speak("Welcome to TURF!");
             }
         });
@@ -68,9 +71,8 @@ public class MapsActivity extends FragmentActivity {
         /*
          * Permissions
          */
-        if (mapPermissionsDelegate.checkPermissions()) {
-
-        } else {
+        MapPermissionsDelegate mapPermissionsDelegate = new MapPermissionsDelegate(this);
+        if(!mapPermissionsDelegate.checkPermissions()) {
             Toast.makeText(this, "Not enough accesses", Toast.LENGTH_LONG).show();
             return;
         }
@@ -78,7 +80,6 @@ public class MapsActivity extends FragmentActivity {
         turfFollow();
         turfZoom();
         turfLocation();
-
 
         Timer timer = new Timer();
         timer.scheduleAtFixedRate(new TimerTask() {
@@ -104,6 +105,7 @@ public class MapsActivity extends FragmentActivity {
             }
         }, 1000, 1000);
 
+        dlg.show(getSupportFragmentManager(), "");
     }
 
     private void turfFollow() {
@@ -117,7 +119,10 @@ public class MapsActivity extends FragmentActivity {
     private void turfLocation() {
         LocationDelegate location = new LocationDelegate((LocationManager)getSystemService(Context.LOCATION_SERVICE));
         location.register(position -> {
+            dlg.addMessage("Fount valid GPS position");
             mapFragment.setPosition(new Position(position.getLatitude(), position.getLongitude()));
+            if(++gps == 6)
+                dlg.cancel();
         });
     }
 
@@ -137,9 +142,11 @@ public class MapsActivity extends FragmentActivity {
                         double longitude = obj.getDouble("longitude");
                         tempUsers.add(new User(name, latitude, longitude));
                     }
+                    dlg.addMessage("Loading " + users.size() + " users");
                     users.setUsers(tempUsers);
                     mapFragment.setUsers(users);
-                } catch (JSONException e) {
+                }
+                catch (JSONException e) {
                     logger.error("" + e);
                 }
             }
@@ -160,7 +167,7 @@ public class MapsActivity extends FragmentActivity {
             public void onResponse(JSONArray json) {
                 logger.info(json.toString());
                 try {
-                    List<Zone> zones = new ArrayList<Zone>();
+                    Zones zones = new Zones();
                     for(int i = 0; i < json.length(); i++) {
                         JSONObject obj = json.getJSONObject(i);
                         String name = obj.getString("name");
@@ -168,6 +175,7 @@ public class MapsActivity extends FragmentActivity {
                         double longitude = obj.getDouble("longitude");
                         zones.add(new Zone(name, latitude, longitude));
                     }
+                    dlg.addMessage("Loading " + zones.size() + " zones");
                     mapFragment.setZones(zones);
                 }
                 catch(JSONException e) {

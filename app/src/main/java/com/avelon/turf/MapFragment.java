@@ -5,6 +5,7 @@ import com.avelon.turf.data.Position;
 import com.avelon.turf.data.User;
 import com.avelon.turf.data.Users;
 import com.avelon.turf.data.Zone;
+import com.avelon.turf.data.Zones;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -25,7 +26,7 @@ public class MapFragment implements OnMapReadyCallback {
     private GoogleMap map;
 
     private Users users = new Users();
-    private List<Zone> zones = new ArrayList<Zone>();
+    private Zones zones = new Zones();
     private Position position = new Position(0.0, 0.0);
     private final HashMap<String, Marker> markers = new HashMap<>();
     private Marker meMarker = null;
@@ -116,7 +117,7 @@ public class MapFragment implements OnMapReadyCallback {
         draw = true;
     }
 
-    public synchronized void setZones(List<Zone> zones) {
+    public synchronized void setZones(Zones zones) {
         logger.method("setZones()", users);
         this.zones = zones;
         draw = true;

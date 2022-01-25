@@ -13,9 +13,9 @@ public class Zoom {
 
     public Zoom(Activity activity, Listener listener) {
         logger.method("Zoom");
-        FloatingActionButton world = (FloatingActionButton) activity.findViewById(R.id.world);
-        FloatingActionButton city = (FloatingActionButton) activity.findViewById(R.id.city);
-        FloatingActionButton street = (FloatingActionButton) activity.findViewById(R.id.street);
+        FloatingActionButton world = (FloatingActionButton)activity.findViewById(R.id.world);
+        FloatingActionButton city = (FloatingActionButton)activity.findViewById(R.id.city);
+        FloatingActionButton street = (FloatingActionButton)activity.findViewById(R.id.street);
 
         world.setBackgroundTintList(ColorStateList.valueOf(Color.GRAY));
         city.setBackgroundTintList(ColorStateList.valueOf(Color.LTGRAY));

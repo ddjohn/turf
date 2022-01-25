@@ -11,6 +11,7 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
     <application
+        android:screenOrientation="portrait"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
@@ -31,6 +32,7 @@
             android:value="@string/google_maps_key" />
 
         <activity
+            android:screenOrientation="locked"
             android:name=".MapsActivity"
             android:exported="true"
             android:label="@string/title_activity_maps">
