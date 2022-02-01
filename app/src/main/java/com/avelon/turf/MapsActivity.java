@@ -22,6 +22,8 @@ import com.avelon.turf.helpers.Speak;
 import com.avelon.turf.utils.Logger;
 import com.google.android.gms.maps.GoogleMap;
 import com.avelon.turf.databinding.ActivityMapsBinding;
+import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -43,6 +45,7 @@ public class MapsActivity extends FragmentActivity {
     private Speak speak;
     private Users users = new Users();
     private int gps = 0;
+    ExtendedFloatingActionButton distance;
 
     @Override
     protected void onSaveInstanceState(@NonNull Bundle bundle) {
@@ -62,6 +65,8 @@ public class MapsActivity extends FragmentActivity {
         setContentView(binding.getRoot());
 
         mapFragment = new MapFragment(this.getSupportFragmentManager());
+        distance = (ExtendedFloatingActionButton)this.findViewById(R.id.distance);
+        distance.setText("---- m");
 
         speak = new Speak(this, new Speak.Listen() {
             @Override
@@ -84,6 +89,7 @@ public class MapsActivity extends FragmentActivity {
         turfZoom();
         turfLocation();
 
+
         Timer timer = new Timer();
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
@@ -96,8 +102,16 @@ public class MapsActivity extends FragmentActivity {
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
+                logger.info("Get distance from users");
+                turfDistance();
+            }
+        }, 10000, 3*1000);
+
+        timer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
                 logger.info("Get zones from server");
-                //turfZones();
+                turfZones();
             }
         }, 5000, 3600*1000);
 
@@ -109,6 +123,15 @@ public class MapsActivity extends FragmentActivity {
         }, 1000, 1000);
 
         dlg.show(getSupportFragmentManager(), "");
+    }
+
+    private void turfDistance() {
+        mapFragment.getDistance(new MapFragment.DistantListener() {
+            @Override
+            public void onDistance(double d) {
+                runOnUiThread(() -> distance.setText(String.format("%2f km", d)));
+            }
+        });
     }
 
     private void turfFollow() {
@@ -199,6 +222,8 @@ public class MapsActivity extends FragmentActivity {
         logger.method("onActivityResult()", request, result, data.toString());
         speak.onActivityResult(request, result, data);
     }
+
+
 }
 
 /*

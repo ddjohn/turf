@@ -68,7 +68,7 @@ public class MapFragment implements OnMapReadyCallback {
 
             if (markers.containsKey(user.name)) {
                 Marker marker = markers.get(user.name);
-                logger.info("Move marker to: " + position);
+                logger.debug("Move marker to for " + user.name + " to " + position);
                 marker.setPosition(position);
                 if(user.hidden) {
                     marker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW));
@@ -77,7 +77,7 @@ public class MapFragment implements OnMapReadyCallback {
                 }
                 markers.put(user.name, marker);
             } else {
-                logger.info("Create new marker: " + position);
+                logger.debug("Create new marker for " + user.name + " to " + position);
                 MarkerOptions markerOptions;
                 if(user.hidden) {
                     markerOptions = new MarkerOptions().position(position).title(user.name).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW));
@@ -116,20 +116,6 @@ public class MapFragment implements OnMapReadyCallback {
         logger.method("setUsers()", users);
         this.users = users;
         draw = true;
-
-
-        // Analyss
-        int no = 0;
-        for(User user : users.values()) {
-            double meter = 1.609344*GFG.distance(user.latitude, position.latitude, user.longitude, position.longitude);
-            logger.error(user.name + "<:>" + meter + " meter");
-            if(meter < 2000){
-                no++;
-            };
-        }
-        if(no > 0) {
-            logger.error("<:>There are " + no  + " players close to you");
-        }
     }
 
     public synchronized void setZones(Zones zones) {
@@ -147,5 +133,22 @@ public class MapFragment implements OnMapReadyCallback {
     public void setFollow(boolean follow) {
         logger.method("setFollow()", follow);
         this.follow = follow;
+    }
+
+    public void getDistance(DistantListener listener) {
+        double distance = 999999;
+        for(User user : users.values()) {
+            double meter = /*1.609344* */GFG.distance(user.latitude, position.latitude, user.longitude, position.longitude);
+            logger.debug(user.name + "<:>" + meter + " meter");
+            if(meter < distance) {
+                distance = meter;
+            }
+        }
+        logger.error("<:>Closest " + distance);
+        listener.onDistance(distance);
+    }
+
+    public interface DistantListener {
+        void onDistance(double distance);
     }
 }
