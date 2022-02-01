@@ -4,9 +4,11 @@
     <option name="filePathToZoomLevelMap">
       <map>
         <entry key="app/src/main/res/drawable/ic_city.xml" value="0.24010416666666667" />
+        <entry key="app/src/main/res/drawable/ic_launcher_foreground.xml" value="0.1895" />
         <entry key="app/src/main/res/drawable/ic_street.xml" value="0.24010416666666667" />
         <entry key="app/src/main/res/drawable/ic_world.xml" value="0.24010416666666667" />
         <entry key="app/src/main/res/layout/activity_maps.xml" value="0.25" />
+        <entry key="app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml" value="0.2035" />
       </map>
     </option>
   </component>

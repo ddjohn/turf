@@ -1,6 +1,6 @@
 package com.avelon.turf.data;
 
-import com.avelon.turf.Logger;
+import com.avelon.turf.utils.Logger;
 import java.util.HashMap;
 import java.util.List;
 

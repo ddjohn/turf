@@ -2,22 +2,14 @@ package com.avelon.turf;
 
 import android.content.Context;
 
-import com.android.volley.NetworkResponse;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.JsonArrayRequest;
-import com.android.volley.toolbox.JsonObjectRequest;
-import com.android.volley.toolbox.JsonRequest;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.avelon.turf.utils.Logger;
 
 import org.json.JSONArray;
 import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.util.Locale;
 
 public class Turf {
     private Logger logger = new Logger(Turf.class);
@@ -42,14 +34,12 @@ public class Turf {
 
         StringRequest stringRequest = new StringRequest(Request.Method.GET, "https://api.turfgame.com/" + url,
                 response -> {
-                    logger.debug("response: " + response);
-
                     //if(response.substring(0, 1).compareTo("[") == 0) {
                     //    response = response.substring(1, response.length()-2);
                     //}
 
                     try {
-                        logger.debug("parse: " + response);
+                        logger.debug("parse: " + url + response);
                         JSONArray obj = new JSONArray(response);
                         listener.onResponse(obj);
                     }

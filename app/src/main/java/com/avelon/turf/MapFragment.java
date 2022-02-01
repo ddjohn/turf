@@ -6,6 +6,8 @@ import com.avelon.turf.data.User;
 import com.avelon.turf.data.Users;
 import com.avelon.turf.data.Zone;
 import com.avelon.turf.data.Zones;
+import com.avelon.turf.helpers.Speak;
+import com.avelon.turf.utils.Logger;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -16,9 +18,8 @@ import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-import java.util.ArrayList;
+
 import java.util.HashMap;
-import java.util.List;
 
 public class MapFragment implements OnMapReadyCallback {
     private static final Logger logger = new Logger(MapFragment.class);
@@ -115,6 +116,20 @@ public class MapFragment implements OnMapReadyCallback {
         logger.method("setUsers()", users);
         this.users = users;
         draw = true;
+
+
+        // Analyss
+        int no = 0;
+        for(User user : users.values()) {
+            double meter = 1.609344*GFG.distance(user.latitude, position.latitude, user.longitude, position.longitude);
+            logger.error(user.name + "<:>" + meter + " meter");
+            if(meter < 2000){
+                no++;
+            };
+        }
+        if(no > 0) {
+            logger.error("<:>There are " + no  + " players close to you");
+        }
     }
 
     public synchronized void setZones(Zones zones) {

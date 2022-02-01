@@ -4,7 +4,7 @@ import android.app.Activity;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 
-import com.avelon.turf.Logger;
+import com.avelon.turf.utils.Logger;
 import com.avelon.turf.R;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 

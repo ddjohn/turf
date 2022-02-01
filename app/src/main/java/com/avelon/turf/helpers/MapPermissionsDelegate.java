@@ -1,4 +1,4 @@
-package com.avelon.turf;
+package com.avelon.turf.helpers;
 
 import android.Manifest;
 import android.app.Activity;
@@ -6,6 +6,8 @@ import android.content.pm.PackageManager;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
+
+import com.avelon.turf.utils.Logger;
 
 public class MapPermissionsDelegate implements ActivityCompat.OnRequestPermissionsResultCallback {
     private static Logger logger = new Logger(MapPermissionsDelegate.class);

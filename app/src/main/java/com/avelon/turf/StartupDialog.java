@@ -6,6 +6,8 @@ import android.os.Bundle;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.DialogFragment;
 
+import com.avelon.turf.utils.Logger;
+
 public class StartupDialog extends DialogFragment {
     Logger logger = new Logger(StartupDialog.class);
 

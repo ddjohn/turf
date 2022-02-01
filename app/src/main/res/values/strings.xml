@@ -1,4 +1,4 @@
 <resources>
-    <string name="app_name">Turf</string>
-    <string name="title_activity_maps">MapsActivity</string>
+    <string name="app_name">TurfBG</string>
+    <string name="title_activity_maps">TurfBG</string>
 </resources>

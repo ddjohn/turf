@@ -1,8 +1,10 @@
-package com.avelon.turf;
+package com.avelon.turf.helpers;
 
 import android.app.Activity;
 import android.content.Intent;
 import android.speech.tts.TextToSpeech;
+
+import com.avelon.turf.utils.Logger;
 
 import java.util.Locale;
 

@@ -1,10 +1,11 @@
-package com.avelon.turf;
+package com.avelon.turf.helpers;
 
 import android.annotation.SuppressLint;
 import android.location.Location;
-import android.location.LocationListener;
 import android.location.LocationManager;
 import androidx.annotation.NonNull;
+
+import com.avelon.turf.utils.Logger;
 
 public class LocationDelegate {
     private Logger logger = new Logger(LocationDelegate.class);
