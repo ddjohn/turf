@@ -22,8 +22,9 @@ import com.avelon.turf.helpers.Speak;
 import com.avelon.turf.utils.Logger;
 import com.google.android.gms.maps.GoogleMap;
 import com.avelon.turf.databinding.ActivityMapsBinding;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -31,12 +32,14 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Timer;
 import java.util.TimerTask;
 
 public class MapsActivity extends FragmentActivity {
     private Logger logger = new Logger(MapsActivity.class);
 
+    private StateMachine states = new StateMachine();
     private StartupDialog dlg = new StartupDialog();
 
     private GoogleMap mMap;
@@ -64,7 +67,7 @@ public class MapsActivity extends FragmentActivity {
         binding = ActivityMapsBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        mapFragment = new MapFragment(this.getSupportFragmentManager());
+        mapFragment = new MapFragment(this.getSupportFragmentManager(), states);
         distance = (ExtendedFloatingActionButton)this.findViewById(R.id.distance);
         distance.setText("---- m");
 
@@ -89,64 +92,37 @@ public class MapsActivity extends FragmentActivity {
         turfZoom();
         turfLocation();
 
+        MyTimer t = new MyTimer();
+        t.schedule(() -> runOnUiThread(() -> mapFragment.update()), 1000, 1000);
+        t.schedule(() -> runOnUiThread(() -> turfUsers()),  2000, 5000);
+        t.schedule(() -> runOnUiThread(() -> turfDistance()), 3000, 10000);
+        t.schedule(() -> runOnUiThread(() -> turfZones()), 4000, 30000);
 
-        Timer timer = new Timer();
-        timer.scheduleAtFixedRate(new TimerTask() {
-            @Override
-            public void run() {
-                logger.info("Get users from server");
-                turfUsers();
-            }
-        }, 0, 3*1000);
-
-        timer.scheduleAtFixedRate(new TimerTask() {
-            @Override
-            public void run() {
-                logger.info("Get distance from users");
-                turfDistance();
-            }
-        }, 10000, 3*1000);
-
-        timer.scheduleAtFixedRate(new TimerTask() {
-            @Override
-            public void run() {
-                logger.info("Get zones from server");
-                turfZones();
-            }
-        }, 5000, 3600*1000);
-
-        timer.scheduleAtFixedRate(new TimerTask() {
-            @Override
-            public void run() {
-                runOnUiThread(() -> mapFragment.update());
-            }
-        }, 1000, 1000);
+        //t.fireAndForget(() -> turfRegions(),  5000);
+       // t.fireAndForget(() ->   turfZones(), 5000);
 
         dlg.show(getSupportFragmentManager(), "");
     }
 
     private void turfDistance() {
-        mapFragment.getDistance(new MapFragment.DistantListener() {
-            @Override
-            public void onDistance(double d) {
-                runOnUiThread(() -> distance.setText(String.format("%2f km", d)));
-            }
-        });
+        mapFragment.getDistance(d -> runOnUiThread(() -> distance.setText(String.format("%2f km", d))));
     }
 
     private void turfFollow() {
-        Follow follow = new Follow(this, (Follow.Listener) follow1 -> mapFragment.setFollow(follow1));
+        Follow follow = new Follow(this, (Follow.Listener) f -> states.setFollow(f));
     }
 
     private void turfZoom() {
-        Zoom zoom = new Zoom(this, (Zoom.Listener) zoom1 -> mapFragment.setZoom(zoom1));
+        Zoom zoom = new Zoom(this, (Zoom.Listener) z -> states.setZoom(z));
     }
 
     private void turfLocation() {
         LocationDelegate location = new LocationDelegate((LocationManager)getSystemService(Context.LOCATION_SERVICE));
         location.register(position -> {
+            logger.method("onPosition()");
             dlg.addMessage("Fount valid GPS position");
-            mapFragment.setPosition(new Position(position.getLatitude(), position.getLongitude()));
+            states.setPosition(position);
+
             if(++gps == 6)
                 dlg.cancel();
         });
@@ -154,27 +130,15 @@ public class MapsActivity extends FragmentActivity {
 
     private void turfUsers() {
         logger.method("turfUsers()");
+        logger.info("Get users from server");
 
         Turf turf = new Turf(this);
         turf.request(Turf.users_location, new Turf.Listener() {
             @Override
             public void onResponse(JSONArray json) {
-                try {
-                    List<User> tempUsers = new ArrayList<User>();
-                    for (int i = 0; i < json.length(); i++) {
-                        JSONObject obj = json.getJSONObject(i);
-                        String name = obj.getString("name");
-                        double latitude = obj.getDouble("latitude");
-                        double longitude = obj.getDouble("longitude");
-                        tempUsers.add(new User(name, latitude, longitude));
-                    }
-                    dlg.addMessage("Loading " + users.size() + " users");
-                    users.setUsers(tempUsers);
-                    mapFragment.setUsers(users);
-                }
-                catch (JSONException e) {
-                    logger.error("" + e);
-                }
+                logger.method("onResponse()");
+                states.setUsers(json);
+                dlg.addMessage("Loading " + json.length() + " users");
             }
 
             @Override
@@ -186,23 +150,62 @@ public class MapsActivity extends FragmentActivity {
 
     private void turfZones() {
         logger.method("turfZones()");
+        logger.info("Get zones from server");
+
+        LatLngBounds bounds = mapFragment.getBounds();
+        //LatLngBounds bounds = new LatLngBounds(new LatLng(0,0), new LatLng(0, 0));
+
+        JSONArray array = new JSONArray();
+        JSONObject json = new JSONObject();
+        array.put(json);
+
+        try {
+            json.put("nortEast",
+                    new JSONObject().accumulate("latitude", bounds.northeast.latitude).accumulate("longitude", bounds.northeast.longitude));
+            json.put("southWest",
+                    new JSONObject().accumulate("latitude", bounds.southwest.latitude).accumulate("longitude", bounds.southwest.longitude));
+        }
+        catch (JSONException e) {
+            e.printStackTrace();
+        }
 
         Turf turf = new Turf(this);
-        turf.request(Turf.zones_all, new Turf.Listener() {
+        turf.request(Turf.zones, array.toString(), new Turf.Listener() {
             @Override
             public void onResponse(JSONArray json) {
-                logger.info(json.toString());
-                try {
-                    Zones zones = new Zones();
-                    for(int i = 0; i < json.length(); i++) {
+                logger.method("onResponse()");
+                dlg.addMessage("Loading " + json.length() + " zones");
+                states.setZones(json);
+            }
+
+            @Override
+            public void onError(String error) {
+                logger.error("That didn't work!" + error);
+                logger.error("That didn't work!" + error.toLowerCase(Locale.ROOT));
+            }
+        });
+    }
+
+    private void turfRegions() {
+        logger.method("turfRegions()");
+        logger.info("Get regions from server");
+
+        Turf turf = new Turf(this);
+        turf.request(Turf.regions, new Turf.Listener() {
+            @Override
+            public void onResponse(JSONArray json) {
+                logger.info("region: " + json.toString());
+              logger.method("turfRegions()");
+        logger.info("Get regions from server");
+      try {
+                    for (int i = 0; i < json.length(); i++) {
                         JSONObject obj = json.getJSONObject(i);
                         String name = obj.getString("name");
-                        double latitude = obj.getDouble("latitude");
-                        double longitude = obj.getDouble("longitude");
-                        zones.add(new Zone(name, latitude, longitude));
+                        logger.info("region: " + obj.getString("name") + obj.getInt("id"));
+                        //double latitude = obj.getDouble("latitude");
+                        //double longitude = obj.getDouble("longitude");
+                        //zones.add(new Zone(name, latitude, longitude));
                     }
-                    dlg.addMessage("Loading " + zones.size() + " zones");
-                    mapFragment.setZones(zones);
                 }
                 catch(JSONException e) {
                     logger.error("" + e);
@@ -222,8 +225,6 @@ public class MapsActivity extends FragmentActivity {
         logger.method("onActivityResult()", request, result, data.toString());
         speak.onActivityResult(request, result, data);
     }
-
-
 }
 
 /*

@@ -16,6 +16,7 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
@@ -24,21 +25,17 @@ import java.util.HashMap;
 public class MapFragment implements OnMapReadyCallback {
     private static final Logger logger = new Logger(MapFragment.class);
 
+    private StateMachine states;
     private GoogleMap map;
 
-    private Users users = new Users();
-    private Zones zones = new Zones();
-    private Position position = new Position(0.0, 0.0);
     private final HashMap<String, Marker> markers = new HashMap<>();
     private Marker meMarker = null;
 
-    private int zoom = 0;
-    private boolean draw = false;
-    private boolean follow = true;
-
-    public MapFragment(FragmentManager mgr) {
+    public MapFragment(FragmentManager mgr, StateMachine states) {
         super();
         logger.method("MapFragment()");
+
+        this.states = states;
 
         SupportMapFragment mapFragment = (SupportMapFragment)mgr.findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
@@ -52,18 +49,18 @@ public class MapFragment implements OnMapReadyCallback {
 
     public synchronized void update() {
         logger.method("update()");
-        if(draw == false)
+        if(states.draw == false)
             return;
 
-        LatLng here = new LatLng(position.latitude, position.longitude);
-        if(follow) {
-            CameraUpdate camera = CameraUpdateFactory.newLatLngZoom(here, zoom);
+        LatLng here = new LatLng(states.position.latitude, states.position.longitude);
+        if(states.follow) {
+            CameraUpdate camera = CameraUpdateFactory.newLatLngZoom(here, states.zoom);
             map.moveCamera(camera);
         }
         //map.clear();
 
-        logger.info("Drawing " + users.size() + " users");
-        for(User user : users.values()) {
+        logger.info("Drawing " + states.users.size() + " users");
+        for(User user : states.users.values()) {
             LatLng position = new LatLng(user.latitude, user.longitude);
 
             if (markers.containsKey(user.name)) {
@@ -90,8 +87,8 @@ public class MapFragment implements OnMapReadyCallback {
             }
         }
 
-        logger.info("Drawing " + zones.size() + " zones");
-        for(Zone zone : zones) {
+        logger.info("Drawing " + states.zones.size() + " zones");
+        for(Zone zone : states.zones) {
             LatLng position = new LatLng(zone.latitude, zone.longitude);
             map.addCircle(new CircleOptions().center(position));
         }
@@ -103,49 +100,25 @@ public class MapFragment implements OnMapReadyCallback {
         } else {
             meMarker.setPosition(here);
         }
-        draw = false;
-    }
+        states.draw = false;
 
-    public synchronized void setPosition(Position position) {
-        logger.method("setPosition()", position);
-        this.position = position;
-        draw = true;
-    }
-
-    public synchronized void setUsers(Users users) {
-        logger.method("setUsers()", users);
-        this.users = users;
-        draw = true;
-    }
-
-    public synchronized void setZones(Zones zones) {
-        logger.method("setZones()", users);
-        this.zones = zones;
-        draw = true;
-    }
-
-    public void setZoom(int zoom) {
-        logger.method("setZoom()", zoom);
-        this.zoom = zoom;
-        draw = true;
-    }
-
-    public void setFollow(boolean follow) {
-        logger.method("setFollow()", follow);
-        this.follow = follow;
     }
 
     public void getDistance(DistantListener listener) {
         double distance = 999999;
-        for(User user : users.values()) {
-            double meter = /*1.609344* */GFG.distance(user.latitude, position.latitude, user.longitude, position.longitude);
+        for(User user : states.users.values()) {
+            double meter = /*1.609344* */GFG.distance(user.latitude, states.position.latitude, user.longitude, states.position.longitude);
             logger.debug(user.name + "<:>" + meter + " meter");
             if(meter < distance) {
                 distance = meter;
             }
         }
-        logger.error("<:>Closest " + distance);
+        logger.info("<:>Closest " + distance);
         listener.onDistance(distance);
+    }
+
+    public LatLngBounds getBounds() {
+        return map.getProjection().getVisibleRegion().latLngBounds;
     }
 
     public interface DistantListener {

@@ -2,6 +2,7 @@ package com.avelon.turf;
 
 import android.content.Context;
 
+import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.StringRequest;
@@ -10,6 +11,7 @@ import com.avelon.turf.utils.Logger;
 
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 public class Turf {
     private Logger logger = new Logger(Turf.class);
@@ -31,19 +33,15 @@ public class Turf {
     }
 
     public void request(String url, Listener listener) {
-
+        logger.method("get_request");
         StringRequest stringRequest = new StringRequest(Request.Method.GET, "https://api.turfgame.com/" + url,
                 response -> {
-                    //if(response.substring(0, 1).compareTo("[") == 0) {
-                    //    response = response.substring(1, response.length()-2);
-                    //}
-
                     try {
-                        logger.debug("parse: " + url + response);
+                        logger.method("onResponse()");
                         JSONArray obj = new JSONArray(response);
                         listener.onResponse(obj);
                     }
-                    catch (JSONException e) {
+                    catch(JSONException e) {
                         logger.error("Parse error: " + url + " " + e.toString());
                         listener.onError("Parse error: " + e.toString());
                     }
@@ -52,6 +50,38 @@ public class Turf {
                     listener.onError("Network error: " + error);
                 }
         );
+        queue.add(stringRequest);
+    }
+
+    public void request(String url, String json, Listener listener) {
+        logger.method("post_request", json, url);
+        StringRequest stringRequest = new StringRequest(Request.Method.POST, "https://api.turfgame.com/" + url,
+                response -> {
+                    logger.method("onResponse()", response);
+                    try {
+                        JSONArray obj = new JSONArray(response);
+                        listener.onResponse(obj);
+                    }
+                    catch (JSONException e) {
+                        logger.error("Parse error: " + url + " " + e.toString());
+                        listener.onError("Parse error: " + e.toString());
+                    }
+                }, error -> {
+            logger.error("Network error: "  + url + " " + error);
+            listener.onError("Network error: " + error);
+        }
+        ) {
+
+            @Override
+            public String getBodyContentType() {
+                return "application/json";
+            }
+
+            @Override
+            public byte[] getBody() throws AuthFailureError {
+                return json.getBytes();
+            }
+        };
         queue.add(stringRequest);
     }
 

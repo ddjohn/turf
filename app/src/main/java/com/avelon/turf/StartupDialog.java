@@ -30,8 +30,6 @@ public class StartupDialog extends DialogFragment {
 
     public synchronized void cancel() {
         enabled = false;
-
-        logger.error("t=" + this.getDialog());
         this.getDialog().cancel();
     }
 }
